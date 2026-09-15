@@ -20,6 +20,7 @@ import com.jcheol.commuteflow.domain.TransitSearchResult
 import com.jcheol.commuteflow.domain.activeProfileAt
 import com.jcheol.commuteflow.domain.formatArrivalTime
 import com.jcheol.commuteflow.domain.formatStopsAway
+import com.jcheol.commuteflow.domain.formatSubwayArrivalStatus
 import com.jcheol.commuteflow.domain.profileSettings
 import java.io.IOException
 import java.net.SocketTimeoutException
@@ -528,7 +529,10 @@ class CommuteFlowViewModel(
             ArrivalLineUi(
                 primaryLabel = "${arrival.destination}행",
                 stopsLabel = arrival.message.ifBlank { arrival.direction },
-                arrivalLabel = formatArrivalTime(arrival.arrivalSeconds),
+                arrivalLabel = formatSubwayArrivalStatus(
+                    seconds = arrival.arrivalSeconds,
+                    message = arrival.message,
+                ),
             )
         }
     }

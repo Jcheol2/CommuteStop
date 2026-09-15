@@ -12,6 +12,19 @@ fun formatArrivalTime(seconds: Int): String = when {
     }
 }
 
+fun formatSubwayArrivalStatus(seconds: Int, message: String): String {
+    val normalizedMessage = message.trim()
+    val stopsBefore = SUBWAY_STOPS_BEFORE_PATTERN
+        .find(normalizedMessage)
+        ?.groupValues
+        ?.getOrNull(1)
+        ?.toIntOrNull()
+    if (stopsBefore != null) return "${stopsBefore}번째 전역"
+    if (SUBWAY_PREVIOUS_STATION_PATTERN.matches(normalizedMessage)) return "1번째 전역"
+    if (seconds > 0) return formatArrivalTime(seconds)
+    return normalizedMessage.ifBlank { "도착 정보 확인 중" }
+}
+
 fun formatStopsAway(stopsAway: Int?): String? = when (stopsAway) {
     null -> null
     0 -> "정류소 진입"
@@ -48,3 +61,6 @@ fun crowdednessName(code: Int?): String? = when (code) {
     4 -> "매우 혼잡"
     else -> null
 }
+
+private val SUBWAY_STOPS_BEFORE_PATTERN = Regex("""\[?(\d+)]?\s*번째\s*전역""")
+private val SUBWAY_PREVIOUS_STATION_PATTERN = Regex("""전역\s+(진입|도착|출발)""")

@@ -20,4 +20,15 @@ class ArrivalFormatterTest {
         assertEquals(null, formatStopsAway(null))
     }
 
+    @Test
+    fun `uses subway position when arrival seconds are unavailable`() {
+        assertEquals("2번째 전역", formatSubwayArrivalStatus(0, "[2]번째 전역 (강남)"))
+        assertEquals("6번째 전역", formatSubwayArrivalStatus(0, "[6]번째 전역 (판교)"))
+        assertEquals("1번째 전역", formatSubwayArrivalStatus(0, "전역 진입"))
+        assertEquals("1번째 전역", formatSubwayArrivalStatus(0, "전역 도착"))
+        assertEquals("1번째 전역", formatSubwayArrivalStatus(0, "전역 출발"))
+        assertEquals("2번째 전역", formatSubwayArrivalStatus(60, "[2]번째 전역 (강남)"))
+        assertEquals("4분 후 도착", formatSubwayArrivalStatus(240, "4분 후 (고속터미널)"))
+    }
+
 }

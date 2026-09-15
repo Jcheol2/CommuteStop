@@ -25,6 +25,27 @@ fun configuredValue(name: String): String = providers.gradleProperty(name).orNul
 
 val seoulTransitProxyUrl = configuredValue("SEOUL_TRANSIT_PROXY_URL")
 
+fun privateValue(name: String): String = providers.environmentVariable(name).orNull
+    ?: providers.gradleProperty(name).orNull
+    ?: localProperties.getProperty(name).orEmpty()
+
+val releaseStoreFile = privateValue("COMMUTEFLOW_RELEASE_STORE_FILE").trim()
+val releaseStorePassword = privateValue("COMMUTEFLOW_RELEASE_STORE_PASSWORD")
+val releaseKeyAlias = privateValue("COMMUTEFLOW_RELEASE_KEY_ALIAS").trim()
+val releaseKeyPassword = privateValue("COMMUTEFLOW_RELEASE_KEY_PASSWORD")
+val releaseSigningValues = listOf(
+    releaseStoreFile,
+    releaseStorePassword,
+    releaseKeyAlias,
+    releaseKeyPassword,
+)
+check(releaseSigningValues.all(String::isBlank) || releaseSigningValues.none(String::isBlank)) {
+    "Release signing requires COMMUTEFLOW_RELEASE_STORE_FILE, " +
+        "COMMUTEFLOW_RELEASE_STORE_PASSWORD, COMMUTEFLOW_RELEASE_KEY_ALIAS, " +
+        "and COMMUTEFLOW_RELEASE_KEY_PASSWORD together."
+}
+val hasReleaseSigningConfig = releaseSigningValues.none(String::isBlank)
+
 fun String.asBuildConfigString(): String = buildString {
     append('"')
     this@asBuildConfigString.forEach { character ->
@@ -42,6 +63,17 @@ fun String.asBuildConfigString(): String = buildString {
 }
 
 android {
+    val releaseSigningConfig = if (hasReleaseSigningConfig) {
+        signingConfigs.create("release") {
+            storeFile = rootProject.file(releaseStoreFile)
+            storePassword = releaseStorePassword
+            keyAlias = releaseKeyAlias
+            keyPassword = releaseKeyPassword
+        }
+    } else {
+        null
+    }
+
     namespace = "com.jcheol.commuteflow"
     compileSdk = 36
 
@@ -49,8 +81,8 @@ android {
         applicationId = "com.jcheol.commuteflow"
         minSdk = 24
         targetSdk = 36
-        versionCode = 2
-        versionName = "2.0"
+        versionCode = 3
+        versionName = "2.1"
 
         testInstrumentationRunner = "androidx.test.runner.AndroidJUnitRunner"
         buildConfigField("String", "GBIS_SERVICE_KEY", publicDataServiceKey.asBuildConfigString())
@@ -59,6 +91,18 @@ android {
             "SEOUL_TRANSIT_PROXY_URL",
             seoulTransitProxyUrl.asBuildConfigString(),
         )
+    }
+
+    buildTypes {
+        release {
+            isMinifyEnabled = true
+            isShrinkResources = true
+            proguardFiles(
+                getDefaultProguardFile("proguard-android-optimize.txt"),
+                "proguard-rules.pro",
+            )
+            releaseSigningConfig?.let { signingConfig = it }
+        }
     }
 
     buildFeatures {
