@@ -26,6 +26,8 @@ class DefaultTransitRepository(
     private val gbisClient: GbisApiClient,
     private val seoulBusClient: SeoulBusApiClient,
     private val subwayClient: SeoulSubwayApiClient,
+    private val shinbundangTimetable: ShinbundangTimetable = ShinbundangTimetable(),
+    private val currentTimeMillis: () -> Long = System::currentTimeMillis,
 ) : TransitRepository {
     override suspend fun search(
         provider: TransitProvider,
@@ -56,14 +58,23 @@ class DefaultTransitRepository(
             TransitArrivalSnapshot.Bus(arrivals)
         }
 
-        is SubwayTransitTarget -> TransitArrivalSnapshot.Subway(
-            subwayClient.getArrivals(
-                stationName = target.stationName,
-                lineId = target.lineId,
-                lineName = target.lineName,
-                directionId = target.directionId,
-            ),
-        )
+        is SubwayTransitTarget -> {
+            val scheduledArrivals = shinbundangTimetable.nextArrivals(
+                target = target,
+                nowMillis = currentTimeMillis(),
+            )
+            val arrivals = if (scheduledArrivals.isNotEmpty()) {
+                scheduledArrivals
+            } else {
+                subwayClient.getArrivals(
+                    stationName = target.stationName,
+                    lineId = target.lineId,
+                    lineName = target.lineName,
+                    directionId = target.directionId,
+                )
+            }
+            TransitArrivalSnapshot.Subway(arrivals)
+        }
     }
 
     private fun String.routeNumber(): Int = filter(Char::isDigit).toIntOrNull() ?: Int.MAX_VALUE

@@ -31,4 +31,12 @@ class ArrivalFormatterTest {
         assertEquals("4분 후 도착", formatSubwayArrivalStatus(240, "4분 후 (고속터미널)"))
     }
 
+    @Test
+    fun `uses timetable countdown before any position wording`() {
+        assertEquals(
+            "5분 후 도착",
+            formatSubwayArrivalStatus(341, "시간표 기준 · 오후 3:39"),
+        )
+    }
+
 }
