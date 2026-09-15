@@ -32,10 +32,10 @@ class ArrivalFormatterTest {
     }
 
     @Test
-    fun `uses timetable countdown before any position wording`() {
+    fun `uses countdown with scheduled time message`() {
         assertEquals(
             "5분 후 도착",
-            formatSubwayArrivalStatus(341, "시간표 기준 · 오후 3:39"),
+            formatSubwayArrivalStatus(341, "오후 3:39 예정"),
         )
     }
 

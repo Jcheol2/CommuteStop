@@ -14,9 +14,6 @@ fun formatArrivalTime(seconds: Int): String = when {
 
 fun formatSubwayArrivalStatus(seconds: Int, message: String): String {
     val normalizedMessage = message.trim()
-    if (normalizedMessage.startsWith(SUBWAY_TIMETABLE_PREFIX) && seconds > 0) {
-        return formatArrivalTime(seconds)
-    }
     val stopsBefore = SUBWAY_STOPS_BEFORE_PATTERN
         .find(normalizedMessage)
         ?.groupValues
@@ -67,4 +64,3 @@ fun crowdednessName(code: Int?): String? = when (code) {
 
 private val SUBWAY_STOPS_BEFORE_PATTERN = Regex("""\[?(\d+)]?\s*번째\s*전역""")
 private val SUBWAY_PREVIOUS_STATION_PATTERN = Regex("""전역\s+(진입|도착|출발)""")
-private const val SUBWAY_TIMETABLE_PREFIX = "시간표 기준"

@@ -20,8 +20,7 @@ class ShinbundangTimetableTest {
 
         assertEquals(listOf(341, 881), arrivals.map { it.arrivalSeconds })
         assertEquals(listOf("광교", "광교"), arrivals.map { it.destination })
-        assertTrue(arrivals.first().message.contains("오후 3:39"))
-        assertTrue(arrivals.first().message.startsWith("시간표 기준"))
+        assertEquals("오후 3:39 예정", arrivals.first().message)
     }
 
     @Test
@@ -33,7 +32,7 @@ class ShinbundangTimetableTest {
 
         assertEquals(401, arrivals.first().arrivalSeconds)
         assertEquals("신사", arrivals.first().destination)
-        assertTrue(arrivals.first().message.contains("오후 3:40"))
+        assertEquals("오후 3:40 예정", arrivals.first().message)
     }
 
     @Test
@@ -49,7 +48,7 @@ class ShinbundangTimetableTest {
 
         assertEquals(101, saturday.first().arrivalSeconds)
         assertEquals(101, childrensDay.first().arrivalSeconds)
-        assertTrue(saturday.first().message.contains("오후 3:35"))
+        assertEquals("오후 3:35 예정", saturday.first().message)
     }
 
     @Test
@@ -61,7 +60,7 @@ class ShinbundangTimetableTest {
 
         assertEquals(60, arrivals.first().arrivalSeconds)
         assertEquals("정자", arrivals.first().destination)
-        assertTrue(arrivals.first().message.contains("오전 12:11"))
+        assertEquals("오전 12:11 예정", arrivals.first().message)
     }
 
     @Test

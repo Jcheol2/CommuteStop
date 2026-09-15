@@ -65,7 +65,7 @@ class ShinbundangTimetable(
                     direction = target.directionLabel,
                     destination = candidate.destination,
                     arrivalSeconds = remainingSeconds,
-                    message = "$TIMETABLE_LABEL · ${formatDepartureTime(candidate.departureTimeMillis)}",
+                    message = "${formatDepartureTime(candidate.departureTimeMillis)} 예정",
                 )
             }
     }
@@ -149,7 +149,6 @@ class ShinbundangTimetable(
         const val DESTINATION_SINSA = "신사"
         const val DESTINATION_GWANGGYO = "광교"
         const val DESTINATION_SEPARATOR = '@'
-        const val TIMETABLE_LABEL = "시간표 기준"
         const val DEFAULT_RESULT_LIMIT = 2
         const val PREVIOUS_DAY = -1
         const val NEXT_DAY = 1
