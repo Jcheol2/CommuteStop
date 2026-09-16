@@ -29,10 +29,25 @@ fun privateValue(name: String): String = providers.environmentVariable(name).orN
     ?: providers.gradleProperty(name).orNull
     ?: localProperties.getProperty(name).orEmpty()
 
-val releaseStoreFile = privateValue("COMMUTEFLOW_RELEASE_STORE_FILE").trim()
-val releaseStorePassword = privateValue("COMMUTEFLOW_RELEASE_STORE_PASSWORD")
-val releaseKeyAlias = privateValue("COMMUTEFLOW_RELEASE_KEY_ALIAS").trim()
-val releaseKeyPassword = privateValue("COMMUTEFLOW_RELEASE_KEY_PASSWORD")
+fun releasePrivateValue(name: String, legacyName: String): String =
+    privateValue(name).ifBlank { privateValue(legacyName) }
+
+val releaseStoreFile = releasePrivateValue(
+    "COMMUTESTOP_RELEASE_STORE_FILE",
+    "COMMUTEFLOW_RELEASE_STORE_FILE",
+).trim()
+val releaseStorePassword = releasePrivateValue(
+    "COMMUTESTOP_RELEASE_STORE_PASSWORD",
+    "COMMUTEFLOW_RELEASE_STORE_PASSWORD",
+)
+val releaseKeyAlias = releasePrivateValue(
+    "COMMUTESTOP_RELEASE_KEY_ALIAS",
+    "COMMUTEFLOW_RELEASE_KEY_ALIAS",
+).trim()
+val releaseKeyPassword = releasePrivateValue(
+    "COMMUTESTOP_RELEASE_KEY_PASSWORD",
+    "COMMUTEFLOW_RELEASE_KEY_PASSWORD",
+)
 val releaseSigningValues = listOf(
     releaseStoreFile,
     releaseStorePassword,
@@ -40,9 +55,9 @@ val releaseSigningValues = listOf(
     releaseKeyPassword,
 )
 check(releaseSigningValues.all(String::isBlank) || releaseSigningValues.none(String::isBlank)) {
-    "Release signing requires COMMUTEFLOW_RELEASE_STORE_FILE, " +
-        "COMMUTEFLOW_RELEASE_STORE_PASSWORD, COMMUTEFLOW_RELEASE_KEY_ALIAS, " +
-        "and COMMUTEFLOW_RELEASE_KEY_PASSWORD together."
+    "Release signing requires COMMUTESTOP_RELEASE_STORE_FILE, " +
+        "COMMUTESTOP_RELEASE_STORE_PASSWORD, COMMUTESTOP_RELEASE_KEY_ALIAS, " +
+        "and COMMUTESTOP_RELEASE_KEY_PASSWORD together."
 }
 val hasReleaseSigningConfig = releaseSigningValues.none(String::isBlank)
 
@@ -74,15 +89,15 @@ android {
         null
     }
 
-    namespace = "com.jcheol.commuteflow"
+    namespace = "com.jcheol.commutestop"
     compileSdk = 36
 
     defaultConfig {
-        applicationId = "com.jcheol.commuteflow"
+        applicationId = "com.jcheol.commutestop"
         minSdk = 24
         targetSdk = 36
-        versionCode = 5
-        versionName = "2.3"
+        versionCode = 1
+        versionName = "1.0"
 
         testInstrumentationRunner = "androidx.test.runner.AndroidJUnitRunner"
         buildConfigField("String", "GBIS_SERVICE_KEY", publicDataServiceKey.asBuildConfigString())
