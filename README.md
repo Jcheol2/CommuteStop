@@ -1,57 +1,109 @@
 # CommuteStop
 
-자주 이용하는 서울·경기 버스 정류소와 지하철역의 도착 정보를 출근/퇴근 프로필로 나눠 확인하는 Android 앱입니다. Kotlin, Jetpack Compose, Material 3로 작성했습니다.
+> 출근과 퇴근 때 확인하는 정류소와 역만 모아, 다음 교통편을 한 화면에서 빠르게 확인하는 Android 앱
+
+CommuteStop은 자주 이용하는 서울·경기 버스 정류소와 지하철역을 출근·퇴근 프로필로 나눠 저장하고, 가장 가까운 도착 정보를 보여줍니다. 앱 표시명은 **출퇴근 정류장**입니다.
 
 ## 주요 기능
 
-- 출근·퇴근 프로필별 교통편 최대 3개 저장
-- 서울·경기 버스 정류소 검색 후 표시할 버스 노선 복수 선택
-- 지하철역 검색 후 노선과 상행·내선/하행·외선 방향 선택
-- 프로필별 다크/라이트 테마(기본값: 출근 다크, 퇴근 라이트)
-- 기준 시각 이전에는 출근, 같거나 이후에는 퇴근 탭으로 시작(기본 12:00)
-- 교통편 순서 변경 및 삭제
-- 설정과 선택 항목을 앱 재실행 후에도 유지
-- 버스 번호·남은 정거장·가장 빠른 첫 도착만 간결하게 표시
-- 정류소의 모든 버스 노선을 선택 목록에 표시하고, 홈에는 사용자가 선택한 노선만 표시
-- 신분당선은 공식 평일·주말/공휴일 시간표를 기준으로 다음 열차 예정 시각 표시
-- 앱이 화면에 보일 때 30초마다 자동 갱신
+- 출근·퇴근 프로필마다 버스 정류소 또는 지하철역을 최대 3개까지 저장
+- 서울·경기 버스 정류소를 검색하고 확인할 노선을 직접 선택
+- 지하철역의 노선과 상행·내선/하행·외선 방향을 선택
+- 버스 번호, 남은 정류장 수, 도착 예상 시간을 간결하게 표시
+- 지하철의 행선지와 현재 위치 또는 다음 열차 예정 시각을 표시
+- 프로필별 교통편 순서 변경과 삭제
+- 출근·퇴근 프로필별 라이트/다크 테마 설정
+- 설정한 기준 시각에 따라 앱을 열 때 보여줄 기본 프로필 자동 선택
+- 저장한 교통편과 설정을 기기에 유지
+- 앱을 보고 있는 동안 30초마다 도착 정보 자동 갱신
 
-선택한 버스는 현재 홈 추적 목록을 의미합니다. Android 백그라운드 알림은 알림 시점/조건이 정해진 뒤 별도 기능으로 추가할 수 있습니다.
+## 이용 흐름
 
-## API 설정
+1. 출근 또는 퇴근 프로필을 선택합니다.
+2. 서울 버스, 경기 버스, 지하철 중 교통수단을 선택해 정류소나 역을 검색합니다.
+3. 버스는 확인할 노선을, 지하철은 노선과 방향을 선택합니다.
+4. 홈 화면에서 저장한 교통편의 가장 가까운 도착 정보를 확인합니다.
+5. 설정에서 표시 순서, 프로필 테마, 출근·퇴근 전환 기준 시각을 변경합니다.
 
-프로젝트 루트의 `local.properties`에 필요한 값을 추가합니다. 키는 모두 발급 화면의 Decoding 키를 사용합니다.
+## 지원 교통 정보
+
+| 교통수단 | 제공 기능 | 데이터 출처 |
+| --- | --- | --- |
+| 서울 버스 | 정류소 검색, 노선 선택, 실시간 도착 | 서울시 공식 버스 API |
+| 경기 버스 | 정류소 검색, 노선 선택, 실시간 도착 | 경기도 공공데이터 API |
+| 지하철 | 역 검색, 노선·방향 선택, 도착 정보 | 서울 열린데이터광장 API |
+| 신분당선 | 방향별 다음 열차 예정 시각 | 신분당선 공식 시간표 |
+
+실시간 도착 정보는 각 공공데이터 제공처의 응답 상황에 따라 지연되거나 제공되지 않을 수 있습니다. 신분당선 예정 시각은 내장된 평일·주말/공휴일 시간표를 사용하므로 실제 운행 상황과 차이가 날 수 있습니다.
+
+## 동작 구조
+
+```mermaid
+flowchart LR
+    UI[Jetpack Compose UI] --> VM[ViewModel]
+    VM --> REPO[TransitRepository]
+    VM --> STORE[SharedPreferences]
+    REPO --> GBIS[경기도 버스 API]
+    REPO --> WORKER[Cloudflare Worker]
+    WORKER --> SEOULBUS[서울 버스 API]
+    WORKER --> SUBWAY[서울 지하철 API]
+    REPO --> TIMETABLE[신분당선 시간표]
+```
+
+서울 버스와 지하철 API는 HTTP 기반 원본 API를 앱에서 직접 호출하지 않도록 Cloudflare Worker가 HTTPS로 중계합니다. 경기 버스는 앱에서 경기도 공공데이터 API를 직접 호출합니다.
+
+## 기술 스택
+
+- Kotlin 2.2
+- Jetpack Compose · Material 3
+- Android Architecture Components · ViewModel
+- Kotlin Coroutines · StateFlow
+- SharedPreferences · JSON
+- Cloudflare Workers
+- JUnit 4
+
+## 프로젝트 구조
+
+```text
+app/src/main/java/com/jcheol/commutestop
+├── data/       # 공공데이터 API, 시간표, 로컬 설정 저장
+├── domain/     # 교통편 모델, 정렬 및 표시 규칙
+└── ui/         # Compose 화면과 ViewModel
+
+seoul-transit-proxy-worker.js  # 서울 버스·지하철 HTTPS 프록시
+wrangler.toml                   # Cloudflare Worker 설정
+```
+
+## 실행 준비
+
+### 요구 환경
+
+- Android Studio
+- JDK 17
+- Android SDK 36
+- Android 7.0(API 24) 이상 기기 또는 에뮬레이터
+- Node.js와 Wrangler CLI(서울 교통정보용 Worker를 직접 배포할 때만 필요)
+
+### API 설정
+
+프로젝트 루트의 `local.properties`에 사용할 데이터 키와 Worker 주소를 추가합니다. 실제 키가 들어간 `local.properties`는 Git에 커밋하지 않습니다.
 
 ```properties
-PUBLIC_DATA_SERVICE_KEY=공공데이터포털_통합_키
+PUBLIC_DATA_SERVICE_KEY=공공데이터포털_Decoding_키
 SEOUL_TRANSIT_PROXY_URL=https://배포한-worker.workers.dev
 ```
 
-### 경기 버스
-
-공공데이터포털에서 아래 두 서비스를 활용 신청합니다.
+`PUBLIC_DATA_SERVICE_KEY`에는 아래 서비스의 활용 승인을 받은 공공데이터포털 키를 사용합니다.
 
 - [경기도 버스정류소 조회](https://www.data.go.kr/data/15080666/openapi.do)
 - [경기도 버스도착정보 조회](https://www.data.go.kr/data/15080346/openapi.do)
-
-두 서비스가 같은 공공데이터포털 키에 승인되어 있어야 검색과 도착 조회가 모두 동작합니다.
-
-### 서울 버스
-
-서울 버스는 서울시 공식 API가 평문 HTTP만 제공되므로 앱에서 직접 호출하지 않고 지하철과 같은 HTTPS Worker를 사용합니다.
-
 - [서울특별시 정류소정보조회 서비스](https://www.data.go.kr/data/15000303/openapi.do)
 
-이 서비스에 `PUBLIC_DATA_SERVICE_KEY`가 활용 승인되어 있어야 합니다. 같은 키를 Cloudflare Worker의 `PUBLIC_DATA_SERVICE_KEY` secret에도 등록합니다. Worker는 정류소명 검색, 경유노선, 실시간 도착정보를 서울시 공식 API에서 중계합니다.
+API 설정 없이도 프로젝트를 빌드하고 단위 테스트를 실행할 수 있지만, 해당 교통수단의 검색과 도착 조회는 사용할 수 없습니다.
 
-### 지하철
+### 서울 교통정보 Worker
 
-서울시 지하철 원본 API는 현재 HTTP만 제공하므로 앱이 키를 평문으로 보내지 않도록 HTTPS Worker 예제를 함께 제공합니다.
-
-1. 서울 열린데이터광장에서 역 검색용 일반 인증키와 실시간 지하철 인증키를 준비합니다.
-2. 프로젝트 루트의 `seoul-transit-proxy-worker.js`와 `wrangler.toml`을 Cloudflare Workers에 배포합니다.
-3. Worker secret `SEOUL_OPEN_DATA_KEY`, `SEOUL_SUBWAY_KEY`, `PUBLIC_DATA_SERVICE_KEY`를 등록합니다.
-4. 배포된 HTTPS 주소를 `SEOUL_TRANSIT_PROXY_URL`에 넣습니다.
+서울 버스와 지하철 기능을 사용하려면 서울 열린데이터광장 키를 준비한 뒤 저장소에 포함된 Worker를 배포합니다.
 
 ```bash
 npx wrangler secret put SEOUL_OPEN_DATA_KEY
@@ -60,15 +112,13 @@ npx wrangler secret put PUBLIC_DATA_SERVICE_KEY
 npx wrangler deploy
 ```
 
-Worker는 역 검색을 1시간, 실시간 도착을 20초 캐시합니다. 서울시 공식 안내상 서울 밖 일부 수도권 구간은 실시간 도착정보가 제공되지 않을 수 있습니다.
+배포가 끝나면 Worker의 HTTPS 주소를 `SEOUL_TRANSIT_PROXY_URL`에 설정합니다. Worker는 검색 결과를 1시간, 실시간 도착 정보를 20초 동안 캐시합니다.
 
-## 빌드
+## 빌드와 테스트
 
 ```bash
 ./gradlew :app:testDebugUnitTest
 ./gradlew :app:assembleDebug
 ```
 
-키나 Worker 주소가 없어도 빌드는 성공하며, 해당 제공자를 검색하거나 조회할 때 필요한 설정명을 화면에 표시합니다. application ID와 Kotlin 패키지는 `com.jcheol.commutestop`, Gradle 프로젝트명은 `CommuteStop`, 앱 표시명은 `출퇴근 정류장`입니다. 기존 설치본과 application ID가 달라 별도 앱으로 설치되며 저장 설정은 자동 이전되지 않습니다.
-
-> `PUBLIC_DATA_SERVICE_KEY`는 경기 버스 호출을 위해 APK에도 포함됩니다. 스토어 배포본에서는 경기 API도 서버 프록시로 옮기고 호출 제한·키 회전을 적용하는 구성을 권장합니다.
+생성된 디버그 APK는 `app/build/outputs/apk/debug/app-debug.apk`에서 확인할 수 있습니다.
