@@ -32,6 +32,12 @@ fun formatStopsAway(stopsAway: Int?): String? = when (stopsAway) {
     else -> "${stopsAway}정거장 전"
 }
 
+fun formatBusStopsAndSeats(stopsAway: Int?, remainingSeats: Int?): String? =
+    listOfNotNull(
+        formatStopsAway(stopsAway),
+        remainingSeats?.let { "${it}석" },
+    ).takeIf { it.isNotEmpty() }?.joinToString(" · ")
+
 fun routeTypeName(code: Int?): String = when (code) {
     11, 17, 21 -> "직행좌석"
     12, 22 -> "좌석"

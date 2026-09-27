@@ -19,7 +19,7 @@ import com.jcheol.commutestop.domain.TransitProvider
 import com.jcheol.commutestop.domain.TransitSearchResult
 import com.jcheol.commutestop.domain.activeProfileAt
 import com.jcheol.commutestop.domain.formatArrivalTime
-import com.jcheol.commutestop.domain.formatStopsAway
+import com.jcheol.commutestop.domain.formatBusStopsAndSeats
 import com.jcheol.commutestop.domain.formatSubwayArrivalStatus
 import com.jcheol.commutestop.domain.profileSettings
 import java.io.IOException
@@ -520,7 +520,10 @@ class CommuteStopViewModel(
         is TransitArrivalSnapshot.Bus -> arrivals.map { arrival ->
             ArrivalLineUi(
                 primaryLabel = arrival.routeName,
-                stopsLabel = formatStopsAway(arrival.stopsAway),
+                stopsLabel = formatBusStopsAndSeats(
+                    stopsAway = arrival.stopsAway,
+                    remainingSeats = arrival.remainingSeats,
+                ),
                 arrivalLabel = formatArrivalTime(arrival.arrivalSeconds),
             )
         }

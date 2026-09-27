@@ -21,6 +21,15 @@ class ArrivalFormatterTest {
     }
 
     @Test
+    fun `formats bus stop distance with remaining seats when available`() {
+        assertEquals("3정거장 전 · 44석", formatBusStopsAndSeats(3, 44))
+        assertEquals("정류소 진입 · 0석", formatBusStopsAndSeats(0, 0))
+        assertEquals("3정거장 전", formatBusStopsAndSeats(3, null))
+        assertEquals("44석", formatBusStopsAndSeats(null, 44))
+        assertEquals(null, formatBusStopsAndSeats(null, null))
+    }
+
+    @Test
     fun `uses subway position when arrival seconds are unavailable`() {
         assertEquals("2번째 전역", formatSubwayArrivalStatus(0, "[2]번째 전역 (강남)"))
         assertEquals("6번째 전역", formatSubwayArrivalStatus(0, "[6]번째 전역 (판교)"))
