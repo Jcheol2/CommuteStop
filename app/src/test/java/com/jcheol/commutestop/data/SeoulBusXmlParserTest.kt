@@ -62,11 +62,19 @@ class SeoulBusXmlParserTest {
             routeId = "234000136",
             vehicleId = "234000999",
             remainingSeats = 41,
+            routeTypeCode = 11,
         )
         val nextVehicle = busArrival(
             routeId = "234000136",
             vehicleId = "234000786",
             remainingSeats = 25,
+            routeTypeCode = 11,
+        )
+        val generalBus = busArrival(
+            routeId = "234000136",
+            vehicleId = "234000999",
+            remainingSeats = 17,
+            routeTypeCode = 13,
         )
 
         assertEquals(
@@ -79,6 +87,12 @@ class SeoulBusXmlParserTest {
         assertNull(
             listOf(seoulArrival)
                 .mergeRemainingSeatsFrom(listOf(nextVehicle))
+                .single()
+                .remainingSeats,
+        )
+        assertNull(
+            listOf(seoulArrival)
+                .mergeRemainingSeatsFrom(listOf(generalBus))
                 .single()
                 .remainingSeats,
         )
@@ -114,7 +128,7 @@ class SeoulBusXmlParserTest {
                 <msgHeader><headerCd>0</headerCd></msgHeader>
                 <msgBody>
                     <itemList>
-                        <busRouteId>100100118</busRouteId><rtNm>701</rtNm><routeType>3</routeType>
+                        <busRouteId>100100118</busRouteId><rtNm>701</rtNm><routeType>6</routeType>
                         <adirection>진관공영차고지</adirection><vehId1>1001</vehId1>
                         <traTime1>125</traTime1><arrmsg1>2분5초후[2번째 전]</arrmsg1>
                         <staOrd>20</staOrd><sectOrd1>18</sectOrd1><stationNm1>시청앞</stationNm1>
@@ -144,11 +158,12 @@ class SeoulBusXmlParserTest {
             routeId: String,
             vehicleId: String,
             remainingSeats: Int?,
+            routeTypeCode: Int = 8,
         ) = BusArrival(
             routeId = routeId,
             routeName = "1550광주",
             destination = "광교차고지",
-            routeTypeCode = 8,
+            routeTypeCode = routeTypeCode,
             status = "운행 중",
             arrivalSeconds = 321,
             stopsAway = 1,

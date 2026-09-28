@@ -27,4 +27,11 @@ fun List<BusArrival>.sortedBySoonest(): List<BusArrival> = sortedWith(
 fun List<BusArrival>.forSelectedRoutes(routeIds: Set<String>): List<BusArrival> =
     filter { arrival -> arrival.routeId in routeIds }.sortedBySoonest()
 
+fun isGyeonggiSeatBusRouteType(code: Int?): Boolean = when (code) {
+    11, 12, 14, 16, 17, 21, 22 -> true
+    else -> false
+}
+
+fun isSeoulMetropolitanBusRouteType(code: Int?): Boolean = code == 6
+
 private fun String.toRouteSortKey(): Int = filter(Char::isDigit).toIntOrNull() ?: Int.MAX_VALUE

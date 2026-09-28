@@ -1,6 +1,8 @@
 package com.jcheol.commutestop.domain
 
 import org.junit.Assert.assertEquals
+import org.junit.Assert.assertFalse
+import org.junit.Assert.assertTrue
 import org.junit.Test
 
 class ArrivalFormatterTest {
@@ -27,6 +29,16 @@ class ArrivalFormatterTest {
         assertEquals("3정거장 전", formatBusStopsAndSeats(3, null))
         assertEquals("44석", formatBusStopsAndSeats(null, 44))
         assertEquals(null, formatBusStopsAndSeats(null, null))
+    }
+
+    @Test
+    fun `recognizes only metropolitan and seat route types for Gyeonggi seats`() {
+        listOf(11, 12, 14, 16, 17, 21, 22).forEach { code ->
+            assertTrue(isGyeonggiSeatBusRouteType(code))
+        }
+        listOf(13, 15, 23, 30, 51, null).forEach { code ->
+            assertFalse(isGyeonggiSeatBusRouteType(code))
+        }
     }
 
     @Test

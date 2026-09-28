@@ -9,6 +9,7 @@ import com.jcheol.commutestop.domain.TransitProvider
 import com.jcheol.commutestop.domain.TransitSearchResult
 import com.jcheol.commutestop.domain.TransitTarget
 import com.jcheol.commutestop.domain.forSelectedRoutes
+import com.jcheol.commutestop.domain.isGyeonggiSeatBusRouteType
 import com.jcheol.commutestop.domain.sortedBySoonest
 import kotlinx.coroutines.CancellationException
 
@@ -124,7 +125,11 @@ internal fun List<BusArrival>.mergeRemainingSeatsFrom(
     seatArrivals: List<BusArrival>,
 ): List<BusArrival> {
     val seatsByVehicle = seatArrivals
-        .filter { it.vehicleId != null && it.remainingSeats != null }
+        .filter {
+            isGyeonggiSeatBusRouteType(it.routeTypeCode) &&
+                it.vehicleId != null &&
+                it.remainingSeats != null
+        }
         .associateBy { it.routeId to it.vehicleId }
     return map { arrival ->
         if (arrival.remainingSeats != null || arrival.vehicleId == null) {

@@ -145,7 +145,7 @@ class GbisXmlParserTest {
                         <locationNo1>-1</locationNo1>
                         <predictTimeSec2></predictTimeSec2>
                         <predictTime2></predictTime2>
-                        <remainSeatCnt1>-1</remainSeatCnt1>
+                        <remainSeatCnt1>17</remainSeatCnt1>
                     </busArrivalList>
                     <busArrivalList>
                         <flag>STOP</flag>

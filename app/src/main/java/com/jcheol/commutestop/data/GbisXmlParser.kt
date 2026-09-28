@@ -4,6 +4,7 @@ import com.jcheol.commutestop.domain.BusArrival
 import com.jcheol.commutestop.domain.BusRouteOption
 import com.jcheol.commutestop.domain.TransitProvider
 import com.jcheol.commutestop.domain.TransitSearchResult
+import com.jcheol.commutestop.domain.isGyeonggiSeatBusRouteType
 import java.io.ByteArrayInputStream
 import java.io.InputStream
 import kotlin.text.Charsets.UTF_8
@@ -131,11 +132,12 @@ internal object GbisXmlParser {
 
         val secondSeconds = int("predictTimeSec2")?.takeIf { it >= 0 }
             ?: int("predictTime2")?.takeIf { it >= 0 }?.times(60)
+        val routeTypeCode = int("routeTypeCd")
         return BusArrival(
             routeId = text("routeId").orEmpty(),
             routeName = routeName,
             destination = text("routeDestName").orEmpty(),
-            routeTypeCode = int("routeTypeCd"),
+            routeTypeCode = routeTypeCode,
             status = status,
             arrivalSeconds = firstSeconds,
             stopsAway = int("locationNo1")?.takeIf { it >= 0 },
@@ -143,7 +145,8 @@ internal object GbisXmlParser {
             nextArrivalSeconds = secondSeconds,
             nextStopsAway = int("locationNo2")?.takeIf { it >= 0 },
             vehicleTypeCode = int("lowPlate1"),
-            remainingSeats = int("remainSeatCnt1")?.takeIf { it >= 0 },
+            remainingSeats = int("remainSeatCnt1")
+                ?.takeIf { it >= 0 && isGyeonggiSeatBusRouteType(routeTypeCode) },
             crowdednessCode = int("crowded1"),
             stationId = text("stationId"),
             vehicleId = text("vehId1"),

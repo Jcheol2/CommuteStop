@@ -4,6 +4,7 @@ import com.jcheol.commutestop.domain.BusArrival
 import com.jcheol.commutestop.domain.BusRouteOption
 import com.jcheol.commutestop.domain.TransitProvider
 import com.jcheol.commutestop.domain.TransitSearchResult
+import com.jcheol.commutestop.domain.isSeoulMetropolitanBusRouteType
 import java.io.InputStream
 import java.net.HttpURLConnection
 import java.net.URL
@@ -127,6 +128,7 @@ internal object SeoulBusXmlParser {
             val firstSectionOrder = item.int("sectOrd1")
             val secondSectionOrder = item.int("sectOrd2")
             val secondVehicleId = item.text("vehId2")
+            val routeTypeCode = item.int("routeType")
             val secondSeconds = if (!secondVehicleId.isNullOrBlank() && secondVehicleId != "0") {
                 item.int("traTime2")?.takeIf { it >= 0 }
                     ?: item.int("arrmsgSec2")?.takeIf { it >= 0 }
@@ -137,7 +139,7 @@ internal object SeoulBusXmlParser {
                 routeId = routeId,
                 routeName = routeName,
                 destination = item.text("adirection").orEmpty(),
-                routeTypeCode = item.int("routeType"),
+                routeTypeCode = routeTypeCode,
                 status = item.text("arrmsg1") ?: "운행 중",
                 arrivalSeconds = firstSeconds,
                 stopsAway = stopsAway(stationOrder, firstSectionOrder),
@@ -145,7 +147,10 @@ internal object SeoulBusXmlParser {
                 nextArrivalSeconds = secondSeconds,
                 nextStopsAway = stopsAway(stationOrder, secondSectionOrder),
                 vehicleTypeCode = item.int("busType1"),
-                remainingSeats = if (item.int("rerdieDiv1") == REMAINING_SEATS_MODE) {
+                remainingSeats = if (
+                    isSeoulMetropolitanBusRouteType(routeTypeCode) &&
+                    item.int("rerdieDiv1") == REMAINING_SEATS_MODE
+                ) {
                     item.int("remndrNmpr1")?.takeIf { it >= 0 }
                 } else {
                     null
