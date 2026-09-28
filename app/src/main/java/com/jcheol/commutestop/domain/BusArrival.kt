@@ -14,6 +14,8 @@ data class BusArrival(
     val vehicleTypeCode: Int?,
     val remainingSeats: Int?,
     val crowdednessCode: Int?,
+    val stationId: String? = null,
+    val vehicleId: String? = null,
 )
 
 fun List<BusArrival>.sortedBySoonest(): List<BusArrival> = sortedWith(

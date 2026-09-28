@@ -1,5 +1,6 @@
 package com.jcheol.commutestop.data
 
+import com.jcheol.commutestop.domain.BusArrival
 import com.jcheol.commutestop.domain.TransitProvider
 import java.io.ByteArrayInputStream
 import kotlin.text.Charsets.UTF_8
@@ -38,7 +39,49 @@ class SeoulBusXmlParserTest {
         assertEquals("2분5초후[2번째 전]", arrival.status)
         assertEquals(420, arrival.nextArrivalSeconds)
         assertEquals(6, arrival.nextStopsAway)
-        assertNull(arrival.remainingSeats)
+        assertEquals(44, arrival.remainingSeats)
+        assertEquals("121000117", arrival.stationId)
+        assertEquals("1001", arrival.vehicleId)
+    }
+
+    @Test
+    fun `ignores seat placeholder when Seoul API reports passenger count mode`() {
+        val arrivals = SeoulBusXmlParser.parseArrivals(PASSENGER_COUNT_XML.asInput())
+
+        assertNull(arrivals.single().remainingSeats)
+    }
+
+    @Test
+    fun `merges GBIS seats only for the same route and vehicle`() {
+        val seoulArrival = busArrival(
+            routeId = "234000136",
+            vehicleId = "234000999",
+            remainingSeats = null,
+        )
+        val sameVehicle = busArrival(
+            routeId = "234000136",
+            vehicleId = "234000999",
+            remainingSeats = 41,
+        )
+        val nextVehicle = busArrival(
+            routeId = "234000136",
+            vehicleId = "234000786",
+            remainingSeats = 25,
+        )
+
+        assertEquals(
+            41,
+            listOf(seoulArrival)
+                .mergeRemainingSeatsFrom(listOf(nextVehicle, sameVehicle))
+                .single()
+                .remainingSeats,
+        )
+        assertNull(
+            listOf(seoulArrival)
+                .mergeRemainingSeatsFrom(listOf(nextVehicle))
+                .single()
+                .remainingSeats,
+        )
     }
 
     private fun String.asInput() = ByteArrayInputStream(toByteArray(UTF_8))
@@ -76,10 +119,47 @@ class SeoulBusXmlParserTest {
                         <traTime1>125</traTime1><arrmsg1>2분5초후[2번째 전]</arrmsg1>
                         <staOrd>20</staOrd><sectOrd1>18</sectOrd1><stationNm1>시청앞</stationNm1>
                         <vehId2>1002</vehId2><traTime2>420</traTime2><sectOrd2>14</sectOrd2>
-                        <busType1>1</busType1><congetion1>3</congetion1>
+                        <busType1>1</busType1><congetion1>3</congetion1><stId>121000117</stId>
+                        <rerdieDiv1>1</rerdieDiv1><remndrNmpr1>44</remndrNmpr1>
                     </itemList>
                 </msgBody>
             </ServiceResult>
         """.trimIndent()
+
+        val PASSENGER_COUNT_XML = """
+            <ServiceResult>
+                <msgHeader><headerCd>0</headerCd></msgHeader>
+                <msgBody>
+                    <itemList>
+                        <busRouteId>234000136</busRouteId><rtNm>1550광주</rtNm>
+                        <routeType>8</routeType><vehId1>234000999</vehId1><traTime1>321</traTime1>
+                        <rerdieDiv1>2</rerdieDiv1><rerideNum1>0</rerideNum1>
+                        <remndrNmpr1>0</remndrNmpr1>
+                    </itemList>
+                </msgBody>
+            </ServiceResult>
+        """.trimIndent()
+
+        fun busArrival(
+            routeId: String,
+            vehicleId: String,
+            remainingSeats: Int?,
+        ) = BusArrival(
+            routeId = routeId,
+            routeName = "1550광주",
+            destination = "광교차고지",
+            routeTypeCode = 8,
+            status = "운행 중",
+            arrivalSeconds = 321,
+            stopsAway = 1,
+            currentStationName = "강남역",
+            nextArrivalSeconds = null,
+            nextStopsAway = null,
+            vehicleTypeCode = null,
+            remainingSeats = remainingSeats,
+            crowdednessCode = null,
+            stationId = "121000117",
+            vehicleId = vehicleId,
+        )
     }
 }

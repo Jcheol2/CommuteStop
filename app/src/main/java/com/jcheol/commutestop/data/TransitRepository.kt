@@ -10,6 +10,7 @@ import com.jcheol.commutestop.domain.TransitSearchResult
 import com.jcheol.commutestop.domain.TransitTarget
 import com.jcheol.commutestop.domain.forSelectedRoutes
 import com.jcheol.commutestop.domain.sortedBySoonest
+import kotlinx.coroutines.CancellationException
 
 sealed interface TransitArrivalSnapshot {
     data class Bus(val arrivals: List<BusArrival>) : TransitArrivalSnapshot
@@ -51,10 +52,14 @@ class DefaultTransitRepository(
         is BusTransitTarget -> {
             val selectedIds = target.routes.mapTo(hashSetOf()) { it.routeId }
             val arrivals = when (target.provider) {
-                TransitProvider.GYEONGGI_BUS -> gbisClient.getArrivals(target.stationId)
-                TransitProvider.SEOUL_BUS -> seoulBusClient.getArrivals(target.stationId)
+                TransitProvider.GYEONGGI_BUS ->
+                    gbisClient.getArrivals(target.stationId).forSelectedRoutes(selectedIds)
+
+                TransitProvider.SEOUL_BUS ->
+                    getSeoulBusArrivalsWithGbisSeats(target.stationId, selectedIds)
+
                 TransitProvider.SEOUL_SUBWAY -> emptyList()
-            }.forSelectedRoutes(selectedIds)
+            }
             TransitArrivalSnapshot.Bus(arrivals)
         }
 
@@ -77,5 +82,57 @@ class DefaultTransitRepository(
         }
     }
 
+    private fun getSeoulBusArrivalsWithGbisSeats(
+        arsId: String,
+        selectedRouteIds: Set<String>,
+    ): List<BusArrival> {
+        val arrivals = seoulBusClient.getArrivals(arsId).forSelectedRoutes(selectedRouteIds)
+        val gbisStationId = arrivals.firstNotNullOfOrNull { arrival ->
+            if (
+                arrival.routeTypeCode == SEOUL_GYEONGGI_ROUTE_TYPE &&
+                    arrival.remainingSeats == null
+            ) {
+                arrival.stationId
+            } else {
+                null
+            }
+        } ?: return arrivals
+        val gbisArrivals = try {
+            gbisClient.getArrivals(
+                stationId = gbisStationId,
+                connectTimeoutMillis = SEAT_ENRICHMENT_CONNECT_TIMEOUT_MILLIS,
+                readTimeoutMillis = SEAT_ENRICHMENT_READ_TIMEOUT_MILLIS,
+            )
+        } catch (error: CancellationException) {
+            throw error
+        } catch (_: Exception) {
+            return arrivals
+        }
+        return arrivals.mergeRemainingSeatsFrom(gbisArrivals)
+    }
+
     private fun String.routeNumber(): Int = filter(Char::isDigit).toIntOrNull() ?: Int.MAX_VALUE
+
+    private companion object {
+        const val SEOUL_GYEONGGI_ROUTE_TYPE = 8
+        const val SEAT_ENRICHMENT_CONNECT_TIMEOUT_MILLIS = 2_000
+        const val SEAT_ENRICHMENT_READ_TIMEOUT_MILLIS = 3_000
+    }
+}
+
+internal fun List<BusArrival>.mergeRemainingSeatsFrom(
+    seatArrivals: List<BusArrival>,
+): List<BusArrival> {
+    val seatsByVehicle = seatArrivals
+        .filter { it.vehicleId != null && it.remainingSeats != null }
+        .associateBy { it.routeId to it.vehicleId }
+    return map { arrival ->
+        if (arrival.remainingSeats != null || arrival.vehicleId == null) {
+            arrival
+        } else {
+            val remainingSeats = seatsByVehicle[arrival.routeId to arrival.vehicleId]
+                ?.remainingSeats
+            if (remainingSeats == null) arrival else arrival.copy(remainingSeats = remainingSeats)
+        }
+    }
 }

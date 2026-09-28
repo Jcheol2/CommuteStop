@@ -17,11 +17,23 @@ class GbisApiException(
 class GbisApiClient(
     private val serviceKey: String,
 ) {
-    fun getArrivals(stationId: String): List<BusArrival> {
+    fun getArrivals(stationId: String): List<BusArrival> = getArrivals(
+        stationId = stationId,
+        connectTimeoutMillis = CONNECT_TIMEOUT_MILLIS,
+        readTimeoutMillis = READ_TIMEOUT_MILLIS,
+    )
+
+    internal fun getArrivals(
+        stationId: String,
+        connectTimeoutMillis: Int,
+        readTimeoutMillis: Int,
+    ): List<BusArrival> {
         val response = request(
             endpoint = ARRIVAL_ENDPOINT,
             query = "stationId=${stationId.encode()}",
             parser = GbisXmlParser::parse,
+            connectTimeoutMillis = connectTimeoutMillis,
+            readTimeoutMillis = readTimeoutMillis,
         )
         return when (response.resultCode) {
             RESULT_SUCCESS -> response.arrivals
@@ -60,6 +72,8 @@ class GbisApiClient(
         endpoint: String,
         query: String,
         parser: (java.io.InputStream) -> T,
+        connectTimeoutMillis: Int = CONNECT_TIMEOUT_MILLIS,
+        readTimeoutMillis: Int = READ_TIMEOUT_MILLIS,
     ): T {
         if (serviceKey.isBlank()) throw MissingApiKeyException()
 
@@ -71,8 +85,8 @@ class GbisApiClient(
 
         return try {
             connection.requestMethod = "GET"
-            connection.connectTimeout = CONNECT_TIMEOUT_MILLIS
-            connection.readTimeout = READ_TIMEOUT_MILLIS
+            connection.connectTimeout = connectTimeoutMillis
+            connection.readTimeout = readTimeoutMillis
             connection.useCaches = false
             connection.setRequestProperty("Accept", "application/xml")
 

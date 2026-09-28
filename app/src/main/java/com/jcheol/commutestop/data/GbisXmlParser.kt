@@ -145,6 +145,8 @@ internal object GbisXmlParser {
             vehicleTypeCode = int("lowPlate1"),
             remainingSeats = int("remainSeatCnt1")?.takeIf { it >= 0 },
             crowdednessCode = int("crowded1"),
+            stationId = text("stationId"),
+            vehicleId = text("vehId1"),
         )
     }
 

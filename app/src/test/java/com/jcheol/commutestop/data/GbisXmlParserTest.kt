@@ -25,6 +25,8 @@ class GbisXmlParserTest {
         assertEquals(1, express.stopsAway)
         assertEquals(1_060, express.nextArrivalSeconds)
         assertEquals(63, express.remainingSeats)
+        assertEquals("121000117", express.stationId)
+        assertEquals("234000999", express.vehicleId)
 
         val local = response.arrivals[1]
         assertEquals("55", local.routeName)
@@ -124,6 +126,8 @@ class GbisXmlParserTest {
                         <predictTimeSec1>78</predictTimeSec1>
                         <locationNo1>1</locationNo1>
                         <stationNm1>한국무역정보통신</stationNm1>
+                        <stationId>121000117</stationId>
+                        <vehId1>234000999</vehId1>
                         <lowPlate1>2</lowPlate1>
                         <remainSeatCnt1>63</remainSeatCnt1>
                         <predictTime2>17</predictTime2>

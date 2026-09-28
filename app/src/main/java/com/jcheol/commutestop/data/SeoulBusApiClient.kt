@@ -145,8 +145,14 @@ internal object SeoulBusXmlParser {
                 nextArrivalSeconds = secondSeconds,
                 nextStopsAway = stopsAway(stationOrder, secondSectionOrder),
                 vehicleTypeCode = item.int("busType1"),
-                remainingSeats = null,
+                remainingSeats = if (item.int("rerdieDiv1") == REMAINING_SEATS_MODE) {
+                    item.int("remndrNmpr1")?.takeIf { it >= 0 }
+                } else {
+                    null
+                },
                 crowdednessCode = item.int("congetion1"),
+                stationId = item.text("stId"),
+                vehicleId = vehicleId,
             )
         }
     }
@@ -198,4 +204,6 @@ internal object SeoulBusXmlParser {
 
     private fun Document.firstText(tagName: String): String? =
         getElementsByTagName(tagName).item(0)?.textContent?.trim()?.takeIf(String::isNotEmpty)
+
+    private const val REMAINING_SEATS_MODE = 1
 }
